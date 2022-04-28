@@ -1,8 +1,8 @@
 #cv2 face recognition
 import cv2
-import threading
 import concurrent.futures
 import math
+import time
 
 #capture video
 capture = cv2.VideoCapture(0)
@@ -10,6 +10,9 @@ width = 640
 height = 480
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+prev_frame_time = 0
+new_frame_time = 0
 
 def face_detect(faces, frame):
     
@@ -43,7 +46,8 @@ def main():
     #face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt.xml')
     #face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt2.xml')
     #face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_profileface.xml')
-
+    prev_frame_time = 0
+    new_frame_time = 0
 
     while True:
         _, frame = capture.read()
@@ -56,10 +60,18 @@ def main():
             result = executor.map(face_detect( faces, frame))
         
 
+        new_frame_time = time.time()
+        fps = 1/(new_frame_time - prev_frame_time)
+        prev_frame_time = new_frame_time
+        
+        fps = round(float(fps), 2)
+        fps = str(fps)
+        cv2.putText(frame, fps, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
         cv2.imshow('frame', frame)
         cv2.imshow('grayscale', grayscale)
 
+        
         key = cv2.waitKey(50)
         if key == 27:
             break

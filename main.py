@@ -1,35 +1,42 @@
 #cv2 face recognition
 import cv2
 import threading
+import concurrent.futures
+import math
 
 #capture video
 capture = cv2.VideoCapture(0)
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+width = 640
+height = 480
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
 def face_detect(faces, frame):
     
     for (x, y, w, h) in faces:
         f = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         cv2.putText(f, 'Face', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        if f is not None:
-            return True
-
-def eye_detect(eyes, frame):
-    for (x, y, w, h) in eyes:
-        e = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(e, 'Eye', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        #draw line from center to face
+        #cv2.line(frame,(x ,y),(320, 240),(0,255,0),1)
+        # calculate vector from center to face
+        vector_x = x - 320
+        vector_y = y - 240
+        # calculate length of vector
+        length = math.sqrt(vector_x**2 + vector_y**2)
+        # calculate angle
+        angle = math.atan(vector_y/vector_x)
+        # draw line from center to face
+        cv2.line(frame,(320,240),(320+int(vector_x), 240+int(vector_y)),(0,255,0),1)
+        cv2.line(frame,(320,240),(320+int(vector_x), 240+int(vector_y)),(0,255,0),1)
+        cv2.circle(frame, (320, 240), int(length), (0, 255, 0), 2)
+        cv2.circle(frame, (320, 240), int(length), (0, 255, 0), 2)
         
-def body_detect(bodys, ubodys, lbodys, frame):
-    for (x, y, w, h) in bodys:
-        b = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(b, 'Body', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    for (x, y, w, h) in ubodys:
-        b = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(b, 'Body', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    for (x, y, w, h) in lbodys:
-        b = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(b, 'Body', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        #print solutions
+        print("vector_x:", vector_x, "vector_y:", vector_y)
+        print("length:", length)
+        print("angle:", angle)
+
+
         
 def main():
     face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_default.xml')
@@ -37,11 +44,6 @@ def main():
     #face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt2.xml')
     #face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_profileface.xml')
 
-    eye_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_eye.xml')
-    
-    body_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_fullbody.xml')
-    upper_body_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_upperbody.xml')
-    lower_body_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_lowerbody.xml')
 
     while True:
         _, frame = capture.read()
@@ -50,27 +52,10 @@ def main():
         #detect faces
         faces = face_cascade.detectMultiScale(grayscale,  1.2,  3, minSize=(30, 30))
         
-        t1 = threading.Thread(target=face_detect, args=(faces, frame))
-        t1.start()
-        t1.join()
-        #if face_detect(faces, frame) == None:
-        #    print('No face detected')
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            result = executor.map(face_detect( faces, frame))
         
-        #detect eyes
-        eyes = eye_cascade.detectMultiScale(grayscale,  1.2,  3, minSize=(30, 30))
-        
-        t2 = threading.Thread(target=eye_detect, args=(eyes, frame))
-        t2.start()
-        t2.join()
-        
-        #detect bodys
-        bodys = body_cascade.detectMultiScale(grayscale,  1.2,  3, minSize=(30, 30))
-        ubodys = upper_body_cascade.detectMultiScale(grayscale,  1.2,  3, minSize=(30, 30))
-        lbodys = lower_body_cascade.detectMultiScale(grayscale,  1.2,  3, minSize=(30, 30))
-        
-        t3 = threading.Thread(target=body_detect, args=(bodys, ubodys, lbodys, frame))
-        t3.start()
-        t3.join()
+
         
         cv2.imshow('frame', frame)
         cv2.imshow('grayscale', grayscale)

@@ -3,7 +3,8 @@ from time import sleep
 import cv2
 import mediapipe as mp
 import mouse
-cap = cv2.VideoCapture(0)
+import concurrent.futures
+cap = cv2.VideoCapture(1)
 
 draw = mp.solutions.drawing_utils
 
@@ -37,17 +38,17 @@ def hands(frame, frgb):
             draw.draw_landmarks(frame, hand, hand_model.HAND_CONNECTIONS,
                                 landmark_drawing_spec=style())
             
-            x1 = hand.landmark[0].x
-            y1 = hand.landmark[0].y
-            x2 = hand.landmark[5].x
-            y2 = hand.landmark[5].y
-            x3 = hand.landmark[9].x
-            y3 = hand.landmark[9].y
-            x4 = hand.landmark[13].x
-            y4 = hand.landmark[13].y
-            x = (x1 + x2 + x3 + x4)/4
-            y = (y1 + y2 + y3 + y4)/4
-            mouse.move(x*2560, y*1440)
+#            x1 = hand.landmark[0].x
+#            y1 = hand.landmark[0].y
+#            x2 = hand.landmark[5].x
+#            y2 = hand.landmark[5].y
+#            x3 = hand.landmark[9].x
+#            y3 = hand.landmark[9].y
+#            x4 = hand.landmark[13].x
+#            y4 = hand.landmark[13].y
+#            x = (x1 + x2 + x3 + x4)/4
+#            y = (y1 + y2 + y3 + y4)/4
+#            mouse.move(x*2560, y*1440)
                           
     
             
@@ -75,10 +76,15 @@ def main():
         frame = cv2.flip(frame, 1)
         frgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
-        hands(frame, frgb)
-        
-        faces(frame, frgb)
-        pose(frame, frgb)
+#        hands(frame, frgb)
+#        faces(frame, frgb)
+#        pose(frame, frgb)
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            #executor.submit(hands, frame, frgb)
+            executor.submit(faces, frame, frgb)
+            executor.submit(pose, frame, frgb)
+
      
         cv2.imshow('frame', frame)
         cv2.waitKey(27)

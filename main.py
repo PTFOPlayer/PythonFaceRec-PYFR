@@ -2,7 +2,6 @@
 from time import sleep
 import cv2
 import mediapipe as mp
-import mouse
 import concurrent.futures
 cap = cv2.VideoCapture(1)
 
@@ -37,20 +36,6 @@ def hands(frame, frgb):
         for i, hand in enumerate(result):
             draw.draw_landmarks(frame, hand, hand_model.HAND_CONNECTIONS,
                                 landmark_drawing_spec=style())
-            
-#            x1 = hand.landmark[0].x
-#            y1 = hand.landmark[0].y
-#            x2 = hand.landmark[5].x
-#            y2 = hand.landmark[5].y
-#            x3 = hand.landmark[9].x
-#            y3 = hand.landmark[9].y
-#            x4 = hand.landmark[13].x
-#            y4 = hand.landmark[13].y
-#            x = (x1 + x2 + x3 + x4)/4
-#            y = (y1 + y2 + y3 + y4)/4
-#            mouse.move(x*2560, y*1440)
-                          
-    
             
 def faces(frame, frgb):
     # face detector
